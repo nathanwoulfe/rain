@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="RainApp">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="">
+	<meta name="author" content="">
+
+	<title>Rain?</title>
+
+	<!-- Bootstrap core CSS -->
+	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+	<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+	<link href='//fonts.googleapis.com/css?family=Roboto+Slab:700|Roboto:300' rel='stylesheet' type='text/css'>
+
+	<!-- Custom styles for this template -->
+	<link href="cover-2.css" rel="stylesheet">
+	<link href="overlay.css" rel="stylesheet">
+
+
+	<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+	<!--[if lt IE 9]>
+      <script src="//oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="//oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body ng-controller="RainCtrl">
+	<div class="site-wrapper" ng-style="borderBottom">
+		<button id="trigger-overlay" type="button" class="fa fa-gear"></button>
+		<div class="site-wrapper-inner">
+			<div class="cover-container">
+				<div class="inner cover">
+					<h1 class="cover-heading">Rain?</h1>
+					<span class="badge-outer" ng-style="badgeBottom">
+						<span class="badge">{{total}}mm</span>	
+					</span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="overlay overlay-contentpush">
+		<button type="button" class="overlay-close fa fa-close"></button>
+		<span ng-repeat="d in data">{{d.station.name}}</span>
+		<nav>
+			<ul>
+				<li><a href="#">Home</a>
+				</li>
+				<li><a href="#">About</a>
+				</li>
+				<li><a href="#">Work</a>
+				</li>
+				<li><a href="#">Clients</a>
+				</li>
+				<li><a href="#">Contact</a>
+				</li>
+			</ul>
+		</nav>
+	</div>
+
+	<!-- Bootstrap core JavaScript
+    ================================================== -->
+	<!-- Placed at the end of the document so the pages load faster -->
+	<script src="modernizr.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.1/angular.min.js"></script>
+	<script src="classie.js"></script>
+	<script src="script.js"></script>
+
+
+	<script>
+		var rainApp = angular.module('RainApp', []);
+		rainApp.controller('RainCtrl', function ($scope) {
+			if ("geolocation" in navigator) {
+				/* geolocation is available */
+				navigator.geolocation.getCurrentPosition(function (position) {
+					findStation(position.coords.latitude, position.coords.longitude);
+				});
+			} else {
+				/* geolocation IS NOT available */
+			}
+
+			function findStation(lat, lon) {
+				var jsonurl = 'http://api.openweathermap.org/data/2.5/station/find?lat=' + lat + '&lon=' + lon + '37&cnt=5$units=metric';
+				$.get(jsonurl, gotData).error(noFuckingData);
+			}
+
+			function gotData(resp) {
+				$scope.data = resp;
+				var i, chanceOfRain = {},
+					len = resp.length;
+				for (i = 0; i < len; i++) {
+					var _this = resp[i].last;
+					if (_this.hasOwnProperty('rain')) {
+						chanceOfRain = merge(chanceOfRain, _this.rain);
+					}
+				}
+				display(chanceOfRain)
+			}
+
+			function merge(a, b) {
+				var cache = {};
+				cache = unpackObject(a, cache);
+				cache = unpackObject(b, cache);
+				return cache;
+			}
+
+			function unpackObject(a, cache) {
+				for (prop in a) {
+					if (a.hasOwnProperty(prop)) {
+						if (cache[prop] === undefined) {
+							cache[prop] = a[prop];
+						} else {
+							if (typeof cache[prop] === typeof a[prop]) {
+								if (is_object(a[prop])) {
+									cache[prop] = merge(cache[prop], a[prop]);
+								} else {
+									cache[prop] += a[prop];
+								}
+							}
+						}
+					}
+				}
+				return cache;
+			}
+
+			function is_object(mixed_var) {
+				if (Object.prototype.toString.call(mixed_var) === '[object Array]') {
+					return false;
+				}
+				return mixed_var !== null && typeof mixed_var == 'object';
+			}
+
+			function display(d) {
+				var later = 0,
+					tomorrow = 0,
+					laterCounter = 0,
+					tomorrowCounter = 0;
+				for (var key in d) {
+					if (key === 'today') {
+						later = later + d[key];
+						laterCounter++;
+					} else if (key === '1h') {
+						later = later + d[key];
+						laterCounter++;
+					} else if (key === '24h') {
+						tomorrow = tomorrow + d[key];
+						tomorrowCounter++;
+					}
+				}
+
+				$scope.total = (tomorrow / tomorrowCounter).toFixed(2);
+				$scope.height = (window.innerHeight * ($scope.total / 100)).toFixed(2);
+				$scope.borderBottom = {
+					'border-bottom-width': $scope.height + 'px'
+				};
+				$scope.badgeBottom = {
+					'bottom': $scope.height > 13 ? ($scope.height - 13) + 'px' : '0px'
+				};
+
+				$scope.$apply();
+			}
+
+			function noFuckingData() {
+				console.log('something fucked up');
+			}
+		});
+	</script>
+
+</body>
+
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="RainApp">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="">
+	<meta name="author" content="">
+
+	<title>Rain?</title>
+
+	<!-- Bootstrap core CSS -->
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+	<link href='http://fonts.googleapis.com/css?family=Roboto+Slab:700|Roboto:300,500' rel='stylesheet' type='text/css'>
+
+	<!-- Custom styles for this template -->
+	<link href="cover.css" rel="stylesheet">
+
+
+	<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+	<!--[if lt IE 9]>
+      <script src="//oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="//oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body ng-controller="RainCtrl">
+
+	<div class="site-wrapper">
+
+		<div class="site-wrapper-inner">
+
+			<div class="cover-container">
+
+				<div class="inner cover">
+					<h1 class="cover-heading">Rain?</h1>
+					<p class="lead rain" id="raining-today" ng-bind="later" ng-if="later != ''"></p>
+					<p class="lead rain" id="raining-later" ng-bind="tomorrow" ng-if="tomorrow != ''"></p>
+				</div>
+
+				<div class="mastfoot">
+					<div class="inner">
+						<p>For when you're too lazy to look out the fucking window.</p>
+					</div>
+				</div>
+
+			</div>
+
+		</div>
+
+	</div>
+
+	<!-- Bootstrap core JavaScript
+    ================================================== -->
+	<!-- Placed at the end of the document so the pages load faster -->
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.1/angular.min.js"></script>
+
+
+
+	<script>
+     var rainApp = angular.module('RainApp', []);
+     rainApp.controller('RainCtrl', function ($scope)
+     {
+         $scope.later = '';
+         $scope.tomorrow = '';
+
+         if ("geolocation" in navigator)
+         {
+             /* geolocation is available */
+             navigator.geolocation.getCurrentPosition(function (position)
+             {
+                 findStation(position.coords.latitude, position.coords.longitude);
+             });
+         } else
+         {
+             /* geolocation IS NOT available */
+         }
+
+         function findStation(lat, lon)
+         {
+             var jsonurl = 'http://api.openweathermap.org/data/2.5/station/find?lat=' + lat + '&lon=' + lon + '37&cnt=10';
+             $.get(jsonurl, gotData).error(noFuckingData);
+         }
+
+         function gotData(resp)
+         {
+             var i, chanceOfRain = {},
+                 len = resp.length;
+             for (i = 0; i < len; i++)
+             {
+                 var _this = resp[i].last;
+                 if (_this.hasOwnProperty('rain'))
+                 {
+                     chanceOfRain = merge(chanceOfRain, _this.rain);
+                 }
+             }
+             display(chanceOfRain)
+         }
+
+         function merge(a, b)
+         {
+             var cache = {};
+             cache = unpackObject(a, cache);
+             cache = unpackObject(b, cache);
+             return cache;
+         }
+
+         function unpackObject(a, cache)
+         {
+             for (prop in a)
+             {
+                 if (a.hasOwnProperty(prop))
+                 {
+                     if (cache[prop] === undefined)
+                     {
+                         cache[prop] = a[prop];
+                     } else
+                     {
+                         if (typeof cache[prop] === typeof a[prop])
+                         {
+                             if (is_object(a[prop]))
+                             {
+                                 cache[prop] = merge(cache[prop], a[prop]);
+                             } else
+                             {
+                                 cache[prop] += a[prop];
+                             }
+                         }
+                     }
+                 }
+             }
+             return cache;
+         }
+
+         function is_object(mixed_var)
+         {
+             if (Object.prototype.toString.call(mixed_var) === '[object Array]')
+             {
+                 return false;
+             }
+             return mixed_var !== null && typeof mixed_var == 'object';
+         }
+
+         function display(d)
+         {
+             var later = 0,
+                 tomorrow = 0,
+                 laterCounter = 0,
+                 tomorrowCounter = 0;
+             for (var key in d)
+             {
+                 if (key === 'today')
+                 {
+                     later = later + d[key];
+                     laterCounter++;
+                 } else if (key === '1h')
+                 {
+                     later = later + d[key];
+                     laterCounter++;
+                 } else if (key === '24h')
+                 {
+                     tomorrow = tomorrow + d[key];
+                     tomorrowCounter++;
+                 }
+             }
+
+             $scope.later = toText(later / laterCounter);
+             $scope.tomorrow = toText(tomorrow / tomorrowCounter);
+             $scope.$apply();
+         }
+
+         var textStrings = {
+             0: ['Fuck no', 'Not fucking likely', 'Dry as fuck', 'Fucking joking, right?', 'Get fucked', 'No fucking way'],
+             5: ['Half a fucking chance', 'Spits and fucking dribbles, maybe', 'Don\'t fucking bet on it', 'Sweet fuck all', 'Maybe a fucking sprinkle'],
+             10: ['It\s a bit fucking soggy', 'It\'s been fucking wetter', 'Nothing fucking special', 'Cats, no fucking dogs', 'Don\'t bother with the fucking clothesline'],
+             50: ['Fucking gushing', 'The fucking rains are here', 'Holy fucking downpour', 'It\'s fucking pouring', 'Cats, dogs, all those fuckers'],
+             100: ['Where the fuck\'s Noah?', 'Shit is fucking Biblical', 'Fuck me, it\'s pissing down']
+         }
+
+         function toText(i)
+         {
+             for (key in textStrings)
+             {
+                 if (i <= key)
+                 {
+                     var o = textStrings[key];
+                     return o[Math.floor(Math.random() * o.length)];
+                 }
+             }
+         }
+
+         function noFuckingData()
+         {
+             console.log('something fucked up');
+         }
+     });
+	</script>
+
+</body>
+
+</html>
