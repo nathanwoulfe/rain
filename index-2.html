@@ -44,21 +44,13 @@
 
 	<div class="overlay overlay-contentpush">
 		<button type="button" class="overlay-close fa fa-close"></button>
-		<span ng-repeat="d in data">{{d.station.name}}</span>
-		<nav>
-			<ul>
-				<li><a href="#">Home</a>
-				</li>
-				<li><a href="#">About</a>
-				</li>
-				<li><a href="#">Work</a>
-				</li>
-				<li><a href="#">Clients</a>
-				</li>
-				<li><a href="#">Contact</a>
-				</li>
-			</ul>
-		</nav>
+		<h2>Huh?</h2>
+        <p>We're making a super-accurate forecast for the next few hours, based on weather data from the station/s at:</p>
+        <ul>
+            <li ng-repeat="d in data">{{d.station.name}}</li>
+        </ul>		
+        <p>Is it really accurate? Reasonably.</p>
+        <p>Why bother? Just to play with AngularJS, </p>
 	</div>
 
 	<!-- Bootstrap core JavaScript
@@ -72,102 +64,142 @@
 
 
 	<script>
-		var rainApp = angular.module('RainApp', []);
-		rainApp.controller('RainCtrl', function ($scope) {
-			if ("geolocation" in navigator) {
-				/* geolocation is available */
-				navigator.geolocation.getCurrentPosition(function (position) {
-					findStation(position.coords.latitude, position.coords.longitude);
-				});
-			} else {
-				/* geolocation IS NOT available */
-			}
+     var rainApp = angular.module('RainApp', []);
 
-			function findStation(lat, lon) {
-				var jsonurl = 'http://api.openweathermap.org/data/2.5/station/find?lat=' + lat + '&lon=' + lon + '37&cnt=5$units=metric';
-				$.get(jsonurl, gotData).error(noFuckingData);
-			}
+     rainApp.controller('RainCtrl', ['$scope', 'weatherService', function ($scope, weatherService)
+     {
+         if ("geolocation" in navigator)
+         {
+             /* geolocation is available */
+             navigator.geolocation.getCurrentPosition(function (position)
+             {
+                 weatherService.findStations(position.coords.latitude, position.coords.longitude)
+                    .success(function (resp)
+                    {
+                        $scope.data = resp;
+                        gotData();
+                    })
+                    .error(function (error)
+                    {
+                        console.log('shit');
+                    });
+             });
+         } else
+         {
+             /* geolocation IS NOT available */
+         }
 
-			function gotData(resp) {
-				$scope.data = resp;
-				var i, chanceOfRain = {},
-					len = resp.length;
-				for (i = 0; i < len; i++) {
-					var _this = resp[i].last;
-					if (_this.hasOwnProperty('rain')) {
-						chanceOfRain = merge(chanceOfRain, _this.rain);
-					}
-				}
-				display(chanceOfRain)
-			}
+         function gotData()
+         {
+             var i, chanceOfRain = {},
+                  len = $scope.data.length;
+             for (i = 0; i < len; i++)
+             {
+                 var _this = $scope.data[i].last;
+                 if (_this.hasOwnProperty('rain'))
+                 {
+                     chanceOfRain = merge(chanceOfRain, _this.rain);
+                 }
+             }
+             display(chanceOfRain)
+         }
 
-			function merge(a, b) {
-				var cache = {};
-				cache = unpackObject(a, cache);
-				cache = unpackObject(b, cache);
-				return cache;
-			}
+         function merge(a, b)
+         {
+             var cache = {};
+             cache = unpackObject(a, cache);
+             cache = unpackObject(b, cache);
+             return cache;
+         }
 
-			function unpackObject(a, cache) {
-				for (prop in a) {
-					if (a.hasOwnProperty(prop)) {
-						if (cache[prop] === undefined) {
-							cache[prop] = a[prop];
-						} else {
-							if (typeof cache[prop] === typeof a[prop]) {
-								if (is_object(a[prop])) {
-									cache[prop] = merge(cache[prop], a[prop]);
-								} else {
-									cache[prop] += a[prop];
-								}
-							}
-						}
-					}
-				}
-				return cache;
-			}
+         function unpackObject(a, cache)
+         {
+             for (prop in a)
+             {
+                 if (a.hasOwnProperty(prop))
+                 {
+                     if (cache[prop] === undefined)
+                     {
+                         cache[prop] = a[prop];
+                     } else
+                     {
+                         if (typeof cache[prop] === typeof a[prop])
+                         {
+                             if (is_object(a[prop]))
+                             {
+                                 cache[prop] = merge(cache[prop], a[prop]);
+                             } else
+                             {
+                                 cache[prop] += a[prop];
+                             }
+                         }
+                     }
+                 }
+             }
+             return cache;
+         }
 
-			function is_object(mixed_var) {
-				if (Object.prototype.toString.call(mixed_var) === '[object Array]') {
-					return false;
-				}
-				return mixed_var !== null && typeof mixed_var == 'object';
-			}
+         function is_object(mixed_var)
+         {
+             if (Object.prototype.toString.call(mixed_var) === '[object Array]')
+             {
+                 return false;
+             }
+             return mixed_var !== null && typeof mixed_var == 'object';
+         }
 
-			function display(d) {
-				var later = 0,
-					tomorrow = 0,
-					laterCounter = 0,
-					tomorrowCounter = 0;
-				for (var key in d) {
-					if (key === 'today') {
-						later = later + d[key];
-						laterCounter++;
-					} else if (key === '1h') {
-						later = later + d[key];
-						laterCounter++;
-					} else if (key === '24h') {
-						tomorrow = tomorrow + d[key];
-						tomorrowCounter++;
-					}
-				}
+         function display(d)
+         {
+             var later = 0,
+                  tomorrow = 0,
+                  laterCounter = 0,
+                  tomorrowCounter = 0;
+             for (var key in d)
+             {
+                 if (key === 'today')
+                 {
+                     later = later + d[key];
+                     laterCounter++;
+                 } else if (key === '1h')
+                 {
+                     later = later + d[key];
+                     laterCounter++;
+                 } else if (key === '24h')
+                 {
+                     tomorrow = tomorrow + d[key];
+                     tomorrowCounter++;
+                 }
+             }
 
-				$scope.total = (tomorrow / tomorrowCounter).toFixed(2);
-				$scope.height = (window.innerHeight * ($scope.total / 100)).toFixed(2);
-				$scope.borderBottom = {
-					'border-bottom-width': $scope.height + 'px'
-				};
-				$scope.badgeBottom = {
-					'bottom': $scope.height > 13 ? ($scope.height - 13) + 'px' : '0px'
-				};
+             $scope.total = (tomorrow / tomorrowCounter).toFixed(2);
+             $scope.height = (window.innerHeight * ($scope.total / 100)).toFixed(2);
+             $scope.borderBottom = {
+                 'border-bottom-width': $scope.height + 'px'
+             };
+             $scope.badgeBottom = {
+                 'bottom': $scope.height > 13 ? ($scope.height - 13) + 'px' : '0px'
+             };
 
-				$scope.$apply();
-			}
+             $scope.$apply();
+         }
 
-			function noFuckingData() {
-				console.log('something fucked up');
-			}
-		});
+         function noFuckingData()
+         {
+             console.log('something fucked up');
+         }
+     } ])
+
+     .service('weatherService', ['$http', function ($http)
+     {
+         this.findStations = function (lat, lon)
+         {
+             return $http.get('http://api.openweathermap.org/data/2.5/station/find?lat=' + lat + '&lon=' + lon + '37&cnt=5$units=metric');
+         }
+     } ]);
+
+
+
+
 	</script>
 
 </body>

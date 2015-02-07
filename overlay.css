@@ -45,10 +45,10 @@ button {
 }
 .overlay ul li {
 	display: block;
-	height: 20%;
+	/*height: 20%;
 	height: -webkit-calc(100% / 5);
 	height: calc(100% / 5);
-	min-height: 54px;
+	min-height: 54px;*/
 	-webkit-backface-visibility: hidden;
 	-ms-backface-visibility: hidden;
 	backface-visibility: hidden;
