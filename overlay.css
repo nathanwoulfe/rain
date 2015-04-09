@@ -16,18 +16,11 @@ button {
 	border: none;
 	outline: none;
 	background: transparent;
-	width: 80px;
-	height: 80px;
+	width: 60px;
+	height: 60px;
 	position: absolute;
 	left: 0;
 	top: 0;
-}
-
-@media (min-width:1025px) {
-	button {
-		top:20px;
-		left:20px;
-	}
 }
 
 .fa {
