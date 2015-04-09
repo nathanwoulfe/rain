@@ -34,7 +34,7 @@
 			<div class="cover-container">
 				<div class="inner cover">
 					<h1 class="cover-heading">Rain?</h1>
-					<span class="badge-outer" ng-style="badgeBottom">
+					<span class="badge-outer">
 						<span class="badge">{{total}}mm</span>	
 					</span>
 				</div>
@@ -176,11 +176,6 @@
              $scope.borderBottom = {
                  'border-bottom-width': $scope.height + 'px'
              };
-             $scope.badgeBottom = {
-                 'bottom': $scope.height > 13 ? ($scope.height - 13) + 'px' : '0px'
-             };
-
-             $scope.$apply();
          }
 
          function noFuckingData()
