@@ -8,6 +8,7 @@
 	left: 0;
 	background: rgba(153, 204, 51, 1);
 	padding:15px;
+	z-index:999;
 }
 /* Overlay closing cross */
 
@@ -21,6 +22,7 @@ button {
 	position: absolute;
 	left: 0;
 	top: 0;
+	z-index:999;
 }
 
 .fa {
